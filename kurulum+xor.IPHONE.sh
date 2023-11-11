@@ -37,6 +37,22 @@ install_openvpn() {
 	git clone https://github.com/furlongm/openvpn-monitor.git
         echo "management 127.0.0.1 5555" >> /etc/openvpn/server/server.conf
         echo "scramble xormask d" >> /etc/openvpn/server/server.conf
+	echo 'push "route 103.220.0.0 255.255.252.0 net_gateway"
+push "route 119.235.112.0 255.255.240.0 net_gateway"
+push "route 154.6.110.0 255.255.255.0 net_gateway"
+push "route 177.93.143.0 255.255.255.0 net_gateway"
+push "route 178.171.66.0 255.255.254.0 net_gateway"
+push "route 185.246.72.0 255.255.252.0 net_gateway"
+push "route 185.69.184.0 255.255.252.0 net_gateway"
+push "route 216.250.8.0 255.255.248.0 net_gateway"
+push "route 217.174.224.0 255.255.240.0 net_gateway"
+push "route 217.8.117.0 255.255.255.0 net_gateway"
+push "route 57.90.150.0 255.255.254.0 net_gateway"
+push "route 93.171.174.0 255.255.255.0 net_gateway"
+push "route 93.171.220.0 255.255.252.0 net_gateway"
+push "route 94.102.176.0 255.255.240.0 net_gateway"
+push "route 95.85.96.0 255.255.224.0 net_gateway"
+push "route 91.202.232.0 255.255.255.0 net_gateway"' >> /etc/openvpn/server/server.conf
 	service openvpn restart
 	service openvpn-server@server restart
 
