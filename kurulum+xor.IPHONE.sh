@@ -1,7 +1,7 @@
 #!/bin/bash
 echo "deb http://cz.archive.ubuntu.com/ubuntu bionic main universe" >> /etc/apt/sources.list && apt update
 apt-get update && apt-get build-dep openvpn -y
-wget --no-check-cert https://github.com/Merdancik94/kurulum-iphone/blob/main/openvpn-2.6.9-xor-amd64.deb
+wget --no-check-cert https://github.com/Merdancik94/kurulum-iphone/raw/main/openvpn-2.6.9-xor-amd64.deb
 dpkg -i openvpn-2.6.9-xor-amd64.deb
 distro_check(){
 	ID=$(grep -oP '(?<=^ID=).+' /etc/os-release | tr -d '"')
