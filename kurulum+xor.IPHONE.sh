@@ -36,7 +36,7 @@ install_openvpn() {
 	cd /var/www/html
 	git clone https://github.com/furlongm/openvpn-monitor.git
         echo "management 127.0.0.1 5555" >> /etc/openvpn/server/server.conf
-        echo "scramble xormask d" >> /etc/openvpn/server/server.conf
+        echo "scramble xormask x" >> /etc/openvpn/server/server.conf
 	echo 'push "route 103.220.0.0 255.255.252.0 net_gateway"
 push "route 119.235.112.0 255.255.240.0 net_gateway"
 push "route 154.6.110.0 255.255.255.0 net_gateway"
