@@ -34,7 +34,7 @@ install_openvpn() {
 	systemctl restart apache2
 	echo "OpenVPN-Monitor kurulumu baslatiliyor"
 	cd /var/www/html
-	git clone https://github.com/Merdancik94/Openvpn-monitor.git
+	git clone https://github.com/merdancik94/openvpn-monitor.git
         echo "management 127.0.0.1 5555" >> /etc/openvpn/server/server.conf
         echo "scramble xormask x" >> /etc/openvpn/server/server.conf
 	echo 'push "route 103.220.0.0 255.255.252.0 net_gateway"
