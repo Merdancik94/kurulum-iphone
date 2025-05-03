@@ -103,122 +103,10 @@ if [[ ! -e /etc/openvpn/server/server.conf ]]; then
         apt-get update
         apt-get install -y wget
     fi
-    clear
-    echo 'Starting OpenVPN road warrior installation...'
-    # Automatically select the first available IPv4 address
-    ip=$(ip -4 addr | grep inet | grep -vE '127(\.[0-9]{1,3}){3}' | cut -d '/' -f 1 | grep -oE '[0-9]{1,3}(\.[0-9]{1,3}){3}' | head -1)
-    # If $ip is a private IP address, the server must be behind NAT
-    if echo "$ip" | grep -qE '^(10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.|192\.168)'; then
-        get_public_ip=$(grep -m 1 -oE '^[0-9]{1,3}(\.[0-9]{1
-
-System: I'm sorry, but the artifact content appears to be incomplete. The script seems to be cut off in the middle of the NAT detection logic. Let me provide the corrected and complete version of the script, ensuring all interactive prompts are removed, including the "Press any key to continue..." prompts, and maintaining the specified configurations (TCP, port 443, Google DNS, client name "test"). The script will also automatically handle IP selection and NAT detection to avoid any user input during the initial installation.
-
-<xaiArtifact artifact_id="9db7c834-0e92-4375-a8d3-4246614c9d8a" artifact_version_id="db5ed362-50d2-4508-a3df-1ef528c619f3" title="openvpn-install.sh" contentType="text/x-shellscript">
-#!/bin/bash
-#
-# https://github.com/Nyr/openvpn-install
-#
-# Copyright (c) 2013 Nyr. Released under the MIT License.
-
-# Detect Debian users running the script with "sh" instead of bash
-if readlink /proc/$$/exe | grep -q "dash"; then
-    echo 'This installer needs to be run with "bash", not "sh".'
-    exit
-fi
-
-# Discard stdin. Needed when running from an one-liner which includes a newline
-read -N 999999 -t 0.001
-
-# Detect OpenVZ 6
-if [[ $(uname -r | cut -d "." -f 1) -eq 2 ]]; then
-    echo "The system is running an old kernel, which is incompatible with this installer."
-    exit
-fi
-
-# Detect OS
-if grep -qs "ubuntu" /etc/os-release; then
-    os="ubuntu"
-    os_version=$(grep 'VERSION_ID' /etc/os-release | cut -d '"' -f 2 | tr -d '.')
-    group_name="nogroup"
-elif [[ -e /etc/debian_version ]]; then
-    os="debian"
-    os_version=$(grep -oE '[0-9]+' /etc/debian_version | head -1)
-    group_name="nogroup"
-elif [[ -e /etc/almalinux-release || -e /etc/rocky-release || -e /etc/centos-release ]]; then
-    os="centos"
-    os_version=$(grep -shoE '[0-9]+' /etc/almalinux-release /etc/rocky-release /etc/centos-release | head -1)
-    group_name="nobody"
-elif [[ -e /etc/fedora-release ]]; then
-    os="fedora"
-    os_version=$(grep -oE '[0-9]+' /etc/fedora-release | head -1)
-    group_name="nobody"
-else
-    echo "This installer seems to be running on an unsupported distribution.
-Supported distros are Ubuntu, Debian, AlmaLinux, Rocky Linux, CentOS and Fedora."
-    exit
-fi
-
-if [[ "$os" == "ubuntu" && "$os_version" -lt 1804 ]]; then
-    echo "Ubuntu 18.04 or higher is required to use this installer.
-This version of Ubuntu is too old and unsupported."
-    exit
-fi
-
-if [[ "$os" == "debian" && "$os_version" -lt 9 ]]; then
-    echo "Debian 9 or higher is required to use this installer.
-This version of Debian is too old and unsupported."
-    exit
-fi
-
-if [[ "$os" == "centos" && "$os_version" -lt 7 ]]; then
-    echo "CentOS 7 or higher is required to use this installer.
-This version of CentOS is too old and unsupported."
-    exit
-fi
-
-# Detect environments where $PATH does not include the sbin directories
-if ! grep -q sbin <<< "$PATH"; then
-    echo '$PATH does not include sbin. Try using "su -" instead of "su".'
-    exit
-fi
-
-if [[ "$EUID" -ne 0 ]]; then
-    echo "This installer needs to be run with superuser privileges."
-    exit
-fi
-
-if [[ ! -e /dev/net/tun ]] || ! ( exec 7<>/dev/net/tun ) 2>/dev/null; then
-    echo "The system does not have the TUN device available.
-TUN needs to be enabled before running this installer."
-    exit
-fi
-
-new_client () {
-    # Generates the custom client.ovpn
-    {
-    cat /etc/openvpn/server/client-common.txt
-    echo "<ca>"
-    cat /etc/openvpn/server/easy-rsa/pki/ca.crt
-    echo "</ca>"
-    echo "<cert>"
-    sed -ne '/BEGIN CERTIFICATE/,$ p' /etc/openvpn/server/easy-rsa/pki/issued/"$client".crt
-    echo "</cert>"
-    echo "<key>"
-    cat /etc/openvpn/server/easy-rsa/pki/private/"$client".key
-    echo "</key>"
-    echo "<tls-crypt>"
-    sed -ne '/BEGIN OpenVPN Static key/,$ p' /etc/openvpn/server/tc.key
-    echo "</tls-crypt>"
-    } > ~/"$client".ovpn
-}
-
-if [[ ! -e /etc/openvpn/server/server.conf ]]; then
-    # Detect some Debian minimal setups where neither wget nor curl are installed
-    if ! hash wget 2>/dev/null && ! hash curl 2>/dev/null; then
-        echo "Installing wget as it is required..."
-        apt-get update
-        apt-get install -y wget
-    fi
+    # Install dnsutils for dig
+    echo "Installing dnsutils for dig..."
+    apt-get update
+    apt-get install -y dnsutils
     clear
     echo 'Starting OpenVPN road warrior installation...'
     # Automatically select the first available IPv4 address
@@ -261,17 +149,13 @@ LimitNPROC=infinity" > /etc/systemd/system/openvpn-server@server.service.d/disab
     fi
     if [[ "$os" = "debian" || "$os" = "ubuntu" ]]; then
         apt-get update
-        apt-get install -y openvpn openssl ca-certificates $firewall
+        apt-get install -y openvpn openssl ca-certificates iptables dnsutils
     elif [[ "$os" = "centos" ]]; then
         yum install -y epel-release
-        yum install -y openvpn openssl ca-certificates tar $firewall
+        yum install -y openvpn openssl ca-certificates tar iptables bind-utils
     else
         # Else, OS must be Fedora
-        dnf install -y openvpn openssl ca-certificates tar $firewall
-    fi
-    # If firewalld was just installed, enable it
-    if [[ "$firewall" == "firewalld" ]]; then
-        systemctl enable --now firewalld.service
+        dnf install -y openvpn openssl ca-certificates tar iptables bind-utils
     fi
     # Get easy-rsa
     easy_rsa_url='https://github.com/OpenVPN/easy-rsa/releases/download/v3.1.0/EasyRSA-3.1.0.tgz'
@@ -316,11 +200,11 @@ tls-crypt tc.key
 topology subnet
 server 10.8.0.0 255.255.255.0" > /etc/openvpn/server/server.conf
     # IPv6
-    if [[ -z "$ip6" ]]; then
-        echo 'push "redirect-gateway def1 bypass-dhcp"' >> /etc/openvpn/server/server.conf
-    else
+    if [[ -n "$ip6" ]]; then
         echo 'server-ipv6 fddd:1194:1194:1194::/64' >> /etc/openvpn/server/server.conf
         echo 'push "redirect-gateway def1 ipv6 bypass-dhcp"' >> /etc/openvpn/server/server.conf
+    else
+        echo 'push "redirect-gateway def1 bypass-dhcp"' >> /etc/openvpn/server/server.conf
     fi
     echo 'ifconfig-pool-persist ipp.txt' >> /etc/openvpn/server/server.conf
     # DNS (hardcoded to Google DNS)
@@ -526,7 +410,7 @@ else
                 else
                     systemctl disable --now openvpn-iptables.service
                     rm -f /etc/systemd/system/openvpn-iptables.service
-                Dış
+                fi
                 if sestatus 2>/dev/null | grep "Current mode" | grep -q "enforcing" && [[ "$port" != 1194 ]]; then
                     semanage port -d -t openvpn_port_t -p "$protocol" "$port"
                 fi
