@@ -148,8 +148,8 @@ if [[ ! -e /etc/openvpn/server/server.conf ]]; then
 	# Определение протокола
 	echo
 	echo "Выберите протокол для OpenVPN:"
-	echo "   1) UDP (рекомендуется)"
-	echo "   2) TCP"
+	echo "   1) UDP"
+	echo "   2) TCP (рекомендуется)"
 	read -p "Протокол [1]: " protocol
 	until [[ -z "$protocol" || "$protocol" =~ ^[12]$ ]]; do
 		echo "$protocol: неверный выбор."
@@ -388,7 +388,7 @@ else
 	done
 
 	case "$option" in
-		1)
+				1)
 			echo
 			echo "Сколько ключей создать?"
 			read -p "Количество: " num_keys
@@ -401,17 +401,39 @@ else
 			echo "Префикс для имени клиента (например 'user'):"
 			read -p "Префикс: " prefix
 
-			for ((i=1; i<=$num_keys; i++)); do
-				if [ "$num_keys" -eq 1 ]; then
-					client="$prefix"
-				else
-					client="${i}${prefix}"
+			# Проверяем, есть ли ключи с таким префиксом
+			existing_keys=()
+			for cert in /etc/openvpn/server/easy-rsa/pki/issued/*.crt; do
+				cert_name=$(basename "$cert" .crt)
+				if [[ "$cert_name" =~ ^([0-9]+)("$prefix")$ ]]; then
+					existing_keys+=(${BASH_REMATCH[1]})
 				fi
+			done
 
-				while [[ -e /etc/openvpn/server/easy-rsa/pki/issued/"$client".crt ]]; do
-					echo "$client уже существует, пропускаем..."
-					continue 2
-				done
+			# Определяем стартовый номер
+			if [ ${#existing_keys[@]} -gt 0 ]; then
+				# Если есть ключи с таким префиксом - продолжаем последовательность
+				max_num=$(printf '%s\n' "${existing_keys[@]}" | sort -nr | head -1)
+				start_num=$((max_num + 1))
+				echo "Найдены существующие ключи с префиксом '$prefix' (макс. номер: $max_num)"
+				echo "Новые ключи будут созданы с номерами $start_num-$((start_num + num_keys - 1))"
+			else
+				# Если ключей с таким префиксом нет - начинаем с 1
+				start_num=1
+				echo "Ключей с префиксом '$prefix' не найдено"
+				echo "Новые ключи будут созданы с номерами 1-$num_keys"
+			fi
+
+			# Создаем новые ключи
+			for ((i=0; i<num_keys; i++)); do
+				current_num=$((start_num + i))
+				client="${current_num}${prefix}"
+				
+				# Проверка на случай, если ключ уже существует (на всякий случай)
+				if [[ -e /etc/openvpn/server/easy-rsa/pki/issued/"$client".crt ]]; then
+					echo "Ключ $client уже существует, пропускаем..."
+					continue
+				fi
 
 				cd /etc/openvpn/server/easy-rsa/
 				EASYRSA_CERT_EXPIRE=3650 ./easyrsa build-client-full "$client" nopass
