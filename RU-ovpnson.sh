@@ -390,16 +390,22 @@ else
 	case "$option" in
 				1)
 			echo
-			echo "Сколько ключей создать?"
-			read -p "Количество: " num_keys
-			until [[ "$num_keys" =~ ^[0-9]+$ && "$num_keys" -ge 1 ]]; do
-				echo "$num_keys: неверное значение."
-				read -p "Количество: " num_keys
-			done
+echo "Введите имя клиента:"
+read -p "Имя/префикс: " prefix
 
-			echo
-			echo "Префикс для имени клиента (например 'user'):"
-			read -p "Префикс: " prefix
+if [[ "$prefix" =~ ^[0-9]+$ ]]; then
+    echo "Имя клиента не может состоять только из цифр. Добавьте буквы."
+    exit 1
+fi
+
+echo
+echo "Сколько ключей создать?"
+read -p "Количество [1]: " num_keys
+until [[ -z "$num_keys" || "$num_keys" =~ ^[0-9]+$ && "$num_keys" -ge 1 ]]; do
+    echo "$num_keys: неверное значение."
+    read -p "Количество [1]: " num_keys
+done
+[[ -z "$num_keys" ]] && num_keys=1
 
 			# Проверяем, есть ли ключи с таким префиксом
 			existing_keys=()
@@ -426,8 +432,12 @@ else
 
 			# Создаем новые ключи
 			for ((i=0; i<num_keys; i++)); do
-				current_num=$((start_num + i))
-				client="${current_num}${prefix}"
+    if [[ "$num_keys" -eq 1 ]]; then
+        client="$prefix"
+    else
+        current_num=$((start_num + i))
+        client="${current_num}${prefix}"
+    fi
 				
 				# Проверка на случай, если ключ уже существует (на всякий случай)
 				if [[ -e /etc/openvpn/server/easy-rsa/pki/issued/"$client".crt ]]; then
