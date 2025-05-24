@@ -37,9 +37,9 @@ install_openvpn() {
     wget --no-check-certificate https://github.com/Merdancik94/kurulum-iphone/raw/main/openvpn_2.4.8-bionic0_amd64.deb
     
     echo ">> Running OpenVPN installation script"
-    wget https://raw.githubusercontent.com/Merdancik94/kurulum-iphone/refs/heads/main/openvpn-install.IPHONEauto.sh
-    chmod +x openvpn-install.IPHONEauto.sh
-    ./openvpn-install.IPHONEauto.sh
+    wget https://raw.githubusercontent.com/Merdancik94/kurulum-iphone/refs/heads/main/openvpn-install.IPHONEautoUDP.sh
+    chmod +x openvpn-install.IPHONEautoUDP.sh
+    ./openvpn-install.IPHONEautoUDP.sh
     
     echo ">> Installing additional packages"
     apt-get install -y git curl apache2 libapache2-mod-wsgi python-geoip2 python-ipaddr \
